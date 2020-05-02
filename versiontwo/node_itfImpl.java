@@ -1,6 +1,8 @@
 import java.rmi.RemoteException;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Timer;
+import java.util.TimerTask;
 
 public class node_itfImpl implements node_itf {
 
@@ -9,7 +11,16 @@ public class node_itfImpl implements node_itf {
     private int memorySize;
     private Map <Integer, String> memoryMap; // only in first node -> easier to manage
     private node_itf nextNode;
+    private Map <Integer, node_itf> nodesOrder;
+    TimerTask handler_failurecheck;
+	Timer timerHandler_failurecheck;
     // private Map <Integer, node_itf> addressNode; // only in first node -> easier to manage
+
+    public void startFailureCheck(node_itf pFirstNode, Map <Integer, node_itf> pNodesOrder) {
+        handler_failurecheck = new handler_failurecheck(pFirstNode, pNodesOrder);
+        timerHandler_failurecheck = new Timer(true);
+        timerHandler_failurecheck.scheduleAtFixedRate(handler_failurecheck, 0, 10000);
+    }
 
     protected node_itfImpl(int pId) {
         this.id = pId;
@@ -17,7 +28,9 @@ public class node_itfImpl implements node_itf {
         this.memoryMap = new HashMap<Integer, String>();
         if(pId == 0) {
             // this.addressNode = new HashMap <Integer, node_itf> ();
+            nodesOrder = new HashMap<Integer, node_itf>();
             nextNode = this;
+            startFailureCheck(this, nodesOrder);
         }
     }
 
@@ -35,6 +48,11 @@ public class node_itfImpl implements node_itf {
     @Override
     public int getMemorySize() throws RemoteException {
         return memorySize;
+    }
+
+    @Override
+    public void registerNode(node_itf pNode) throws RemoteException {
+        nodesOrder.put(nodesOrder.size(), pNode);
     }
 
     @Override
@@ -132,5 +150,43 @@ public class node_itfImpl implements node_itf {
     @Override
     public node_itf getNextNode() throws RemoteException {
         return nextNode;
+    }
+
+    @Override
+    public boolean failureCheck(int pCount, node_itf pFirstNode, Map <Integer, node_itf> pNodesOrder, boolean pStart) throws RemoteException {
+        try {
+            if (this.id == 0 && pStart == false) { // if checking arrived at first node
+                return true;
+            } else { // continue to next node
+                return nextNode.failureCheck(pCount + 1, pFirstNode, pNodesOrder, false);
+            }
+        } catch (Exception e) {
+            if (pNodesOrder.size() == pCount + 2 ) { // if the nextnode is connected to first node
+                this.nextNode = pFirstNode;
+            } else {
+                this.nextNode = pNodesOrder.get(pCount + 2);
+            }
+            return false;
+        }
+    }
+
+    @Override
+    public void failureRestoreNodesOrder(int pCount, boolean pStart, Map <Integer, node_itf> pNodesOrder) throws RemoteException {
+        if(this.id == 0 && pStart == true) {
+            pNodesOrder.put(0, this);
+            this.nextNode.failureRestoreNodesOrder(pCount+1, false, pNodesOrder);
+        } else if (this.id == 0 && pStart == false) {
+            this.nodesOrder = pNodesOrder;
+        } else {
+            pNodesOrder.put(pCount, this);
+            this.nextNode.failureRestoreNodesOrder(pCount+1, false, pNodesOrder);
+        }
+    }
+
+    @Override
+    public void test() throws RemoteException {
+        for(Map.Entry<Integer, node_itf> entry : this.nodesOrder.entrySet()) {           
+            System.out.println("Order [" + entry.getKey() + "], Id " + entry.getValue().getId());
+        }
     }
 }

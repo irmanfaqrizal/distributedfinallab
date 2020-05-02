@@ -15,7 +15,10 @@ public class node_main {
             System.out.print("Insert Command > ");
             message = scanner.nextLine();
             String [] arr = message.split(" ");
-            if (arr[0].equals("snapshotlocal")) {
+            if(arr[0].equals("next")){
+                node.test();
+                // System.out.println(node.getNextNode());
+            } else if (arr[0].equals("snapshotlocal")) {
                 node.snapshotLocal();
             } else if (arr[0].equals("snapshot")) {
                 Map <Integer, String> tmpMap = new HashMap<Integer, String>();
@@ -58,6 +61,8 @@ public class node_main {
                 node_itf firstNodeStub = (node_itf) UnicastRemoteObject.exportObject(firstNode, 0);
                 registry.rebind("node0", firstNodeStub);
                 firstNodeStub.setMemory(memorySize);
+                firstNodeStub.registerNode(firstNodeStub);
+
                 System.out.println("First node is created...!!!");
                 scanUserInput(firstNodeStub, 0);
             } else {
@@ -69,7 +74,7 @@ public class node_main {
                 node_itf nodeStub = (node_itf) UnicastRemoteObject.exportObject(node, 0);
                 registry.rebind("node" + nodeId, nodeStub);
                 nodeStub.setMemory(nodeMemorySize);
-
+                firstNodeStub.registerNode(nodeStub);
                 firstNodeStub.setNextNodeTraverse(nodeStub);
                 System.out.println("Node " + nodeId + " is created...!!!");
 
