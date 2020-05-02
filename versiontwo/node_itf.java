@@ -12,8 +12,8 @@ public interface node_itf extends Remote {
     node_itf getNodeFromAdress (int address) throws RemoteException;
     String read (int address) throws RemoteException;
     boolean write (int address, String value) throws RemoteException;
-    // Map <Integer, String> snapshot (int idNodeRequest) throws RemoteException;
-    String [] snapshotLocal() throws RemoteException; 
+    void snapshot (int pId, Map <Integer, String> tmpMap) throws RemoteException;
+    void snapshotLocal() throws RemoteException; 
     void setNextNodeTraverse (node_itf pNext) throws RemoteException;
     void setNextNode (node_itf pNext) throws RemoteException;
     node_itf getNextNode() throws RemoteException;

@@ -3,6 +3,7 @@ import java.rmi.RemoteException;
 import java.rmi.registry.LocateRegistry;
 import java.rmi.registry.Registry;
 import java.rmi.server.UnicastRemoteObject;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.Scanner;
 
@@ -34,13 +35,11 @@ public class node_main {
                     message = scanner.nextLine();
                     String [] arr = message.split(" ");
                     if (arr[0].equals("snapshotlocal")) {
-                        System.out.println("Local memory ===>");
-                        for (String var : firstNodeStub.snapshotLocal()) { 
-                            System.out.print(var + " ");
-                        }
+                        firstNodeStub.snapshotLocal();
                         System.out.println("");
                     } else if (arr[0].equals("snapshot")) {
-            
+                        Map <Integer, String> tmpMap = new HashMap<Integer, String>();
+                        firstNodeStub.snapshot(0, tmpMap);
                     } else if((arr[0].equals("read") && arr.length > 1 && arr[1].matches("-?\\d+")) 
                                 && Integer.parseInt(arr[1]) > 0) {
                                 
@@ -64,16 +63,16 @@ public class node_main {
             } else {
                 Registry registry = LocateRegistry.getRegistry(port);
                 node_itf firstNodeStub = (node_itf) registry.lookup("node0");
-                int nextId = firstNodeStub.getNextId();
+                int nodeId = firstNodeStub.getNextId();
                 int nodeMemorySize = firstNodeStub.getMemorySize();
-                node_itfImpl node = new node_itfImpl(nextId);
+                node_itfImpl node = new node_itfImpl(nodeId);
                 node_itf nodeStub = (node_itf) UnicastRemoteObject.exportObject(node, 0);
-                registry.rebind("node" + nextId, nodeStub);
+                registry.rebind("node" + nodeId, nodeStub);
                 nodeStub.setMemory(nodeMemorySize);
 
                 firstNodeStub.setNextNodeTraverse(nodeStub);
                 firstNodeStub.registerAddress(nodeStub);
-                System.out.println("Node " + nextId + " is created...!!!");
+                System.out.println("Node " + nodeId + " is created...!!!");
 
                 Scanner scanner = new Scanner(System.in);
                 String message;
@@ -81,13 +80,11 @@ public class node_main {
                     message = scanner.nextLine();
                     String [] arr = message.split(" ");
                     if (arr[0].equals("snapshotlocal")) {
-                        System.out.println("Local memory ===>");
-                        for (String var : node.snapshotLocal()) { 
-                            System.out.print(var + " ");
-                        }
+                        nodeStub.snapshotLocal();
                         System.out.println("");
                     } else if (arr[0].equals("snapshot")) {
-            
+                        Map <Integer, String> tmpMap = new HashMap<Integer, String>();
+                        nodeStub.snapshot(nodeId, tmpMap);
                     } else if((arr[0].equals("read") && arr.length > 1 && arr[1].matches("-?\\d+")) 
                                 && Integer.parseInt(arr[1]) > 0) {
                                 
@@ -105,7 +102,8 @@ public class node_main {
                                 nodeToWrite.write(address, value);
                                 System.out.println("OK");
                     } else {
-                                System.out.println("Command Unknown...!!!");
+                                System.out.println("Command Unknown...!!!\n" + 
+                                "Usage =>\n1. write <address> <value>\n2. read <address>\n3. snapshot\n4. snapshotlocal");
                     }
                 }
             }

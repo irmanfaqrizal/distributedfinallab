@@ -9,14 +9,16 @@ public class node_itfImpl implements node_itf {
     private int idCount;
     private int memorySize;
     private String[] memory;
+    private Map <Integer, String> memoryMap; // only in first node -> easier to manage
     private node_itf nextNode;
     private Map <Integer, node_itf> addressNode; // only in first node -> easier to manage
 
     protected node_itfImpl(int pId) {
         this.id = pId;
         this.idCount = 0;
+        this.memoryMap = new HashMap<Integer, String>();
         if(pId == 0) {
-            addressNode = new HashMap <Integer, node_itf> ();
+            this.addressNode = new HashMap <Integer, node_itf> ();
         }
     }
 
@@ -39,8 +41,9 @@ public class node_itfImpl implements node_itf {
     @Override
     public void setMemory(int pMemorySize) throws RemoteException {
         this.memorySize = pMemorySize;
-        this.memory = new String[pMemorySize];
-        Arrays.fill(memory, "");
+        for (int i = 0; i < pMemorySize; i++) {
+            memoryMap.put(i + (this.id * pMemorySize), "");
+        }
     }
 
     @Override
@@ -64,26 +67,33 @@ public class node_itfImpl implements node_itf {
 
     @Override
     public String read(int address) throws RemoteException {
-        return memory[address % 10];
+        return memoryMap.get(address);
     }
 
     @Override
     public boolean write(int address, String value) throws RemoteException {
-        memory[address % 10] = value;
+        memoryMap.put(address, value);
         return true;
     }
 
-    // @Override
-    // public Map<Integer, String> snapshot(int idNodeRequest) throws RemoteException {
-    //     if(idNodeRequest == nextNode.getId()) {
-
-    //     }
-    //     return null;
-    // }
+    @Override
+    public void snapshot(int pId, Map <Integer, String> tmpMap) throws RemoteException {
+        if (this.id != pId || tmpMap.size() == 0) {
+            tmpMap.putAll(memoryMap);
+            nextNode.snapshot(pId, tmpMap);
+        } else {
+            for(Map.Entry<Integer, String> entry : tmpMap.entrySet()) {           
+                System.out.println("Address [" + entry.getKey() + "] : " + entry.getValue());
+            }
+        }
+    }
 
     @Override
-    public String[] snapshotLocal() throws RemoteException {
-        return memory;
+    public void snapshotLocal() throws RemoteException {
+        System.out.println("Local memory =>");
+        for(Map.Entry<Integer, String> entry : this.memoryMap.entrySet()) {           
+            System.out.println("Address [" + entry.getKey() + "] : " + entry.getValue());
+        }
     }
 
     @Override
