@@ -1,21 +1,23 @@
-import java.rmi.NotBoundException;
 import java.rmi.RemoteException;
-import java.rmi.registry.LocateRegistry;
-import java.rmi.registry.Registry;
 import java.util.Arrays;
+import java.util.HashMap;
+import java.util.Map;
 
 public class node_itfImpl implements node_itf {
 
     private int id;
     private int idCount;
+    private int memorySize;
     private String[] memory;
     private node_itf nextNode;
+    private Map <Integer, node_itf> addressNode; // only in first node -> easier to manage
 
     protected node_itfImpl(int pId) {
         this.id = pId;
-        idCount = 0;
-        memory = new String[10];
-        Arrays.fill(memory, "");
+        this.idCount = 0;
+        if(pId == 0) {
+            addressNode = new HashMap <Integer, node_itf> ();
+        }
     }
 
     @Override
@@ -30,6 +32,37 @@ public class node_itfImpl implements node_itf {
     }
 
     @Override
+    public int getMemorySize() throws RemoteException {
+        return memorySize;
+    }
+
+    @Override
+    public void setMemory(int pMemorySize) throws RemoteException {
+        this.memorySize = pMemorySize;
+        this.memory = new String[pMemorySize];
+        Arrays.fill(memory, "");
+    }
+
+    @Override
+    public void registerAddress(node_itf pNode) throws RemoteException {
+        int idx = idCount * memorySize;
+        for (int i = 0; i < memorySize; i++) {
+            addressNode.put(idx, pNode);
+            idx++;
+        }
+    }
+
+    @Override
+    public Map<Integer, node_itf> getAddressNode() throws RemoteException {
+        return addressNode;
+    }
+
+    @Override
+    public node_itf getNodeFromAdress(int address) throws RemoteException {
+        return addressNode.get(address);
+    }
+
+    @Override
     public String read(int address) throws RemoteException {
         return memory[address % 10];
     }
@@ -38,6 +71,19 @@ public class node_itfImpl implements node_itf {
     public boolean write(int address, String value) throws RemoteException {
         memory[address % 10] = value;
         return true;
+    }
+
+    // @Override
+    // public Map<Integer, String> snapshot(int idNodeRequest) throws RemoteException {
+    //     if(idNodeRequest == nextNode.getId()) {
+
+    //     }
+    //     return null;
+    // }
+
+    @Override
+    public String[] snapshotLocal() throws RemoteException {
+        return memory;
     }
 
     @Override
@@ -51,18 +97,10 @@ public class node_itfImpl implements node_itf {
             pNext.setNextNode(nextNode);
             nextNode = pNext;
         }
-
-        // if(id == 0){
-        //     nextNode = pNext;
-        //     pNext.setNextNode(this);
-        // } else {
-        //     nextNode = pNext;
-        // }
     }
 
     @Override
     public void setNextNode(node_itf pNext) throws RemoteException {
-        System.out.println("here");
         nextNode = pNext;
     }
 
