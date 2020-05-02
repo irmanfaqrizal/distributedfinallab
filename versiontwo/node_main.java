@@ -1,4 +1,3 @@
-import java.rmi.NotBoundException;
 import java.rmi.RemoteException;
 import java.rmi.registry.LocateRegistry;
 import java.rmi.registry.Registry;
@@ -8,6 +7,39 @@ import java.util.Map;
 import java.util.Scanner;
 
 public class node_main {
+
+    static void scanUserInput(node_itf node, int nodeId) throws RemoteException {
+        Scanner scanner = new Scanner(System.in);
+        String message;
+        while (true) {
+            System.out.print("Insert Command > ");
+            message = scanner.nextLine();
+            String [] arr = message.split(" ");
+            if (arr[0].equals("snapshotlocal")) {
+                node.snapshotLocal();
+            } else if (arr[0].equals("snapshot")) {
+                Map <Integer, String> tmpMap = new HashMap<Integer, String>();
+                node.snapshot(nodeId, tmpMap);
+            } else if((arr[0].equals("read") && arr.length > 1 && arr[1].matches("-?\\d+")) 
+                        && Integer.parseInt(arr[1]) > 0) {
+                        
+                        int address = Integer.parseInt(arr[1]);
+                        String value = node.read(address, nodeId, true);
+                        System.out.println("Address " + arr[1] + " : " +  value);
+            
+            } else if((arr[0].equals("write") && arr.length > 2 && arr[1].matches("-?\\d+")) 
+                    && Integer.parseInt(arr[1]) > 0) {
+                        
+                        int address = Integer.parseInt(arr[1]);
+                        String value = arr[2];
+                        String ok = node.write(address, value, nodeId, true);
+                        System.out.println(ok);
+            } else {
+                        System.out.println("Command Unknown...!!!\n" + 
+                        "Usage =>\n1. write <address> <value>\n2. read <address>\n3. snapshot\n4. snapshotlocal");
+            }
+        }
+    }
 
     public static void main(String[] args) {
 		try {
@@ -26,40 +58,8 @@ public class node_main {
                 node_itf firstNodeStub = (node_itf) UnicastRemoteObject.exportObject(firstNode, 0);
                 registry.rebind("node0", firstNodeStub);
                 firstNodeStub.setMemory(memorySize);
-                firstNodeStub.registerAddress(firstNodeStub);
                 System.out.println("First node is created...!!!");
-            
-                Scanner scanner = new Scanner(System.in);
-                String message;
-                while (true) {
-                    message = scanner.nextLine();
-                    String [] arr = message.split(" ");
-                    if (arr[0].equals("snapshotlocal")) {
-                        firstNodeStub.snapshotLocal();
-                        System.out.println("");
-                    } else if (arr[0].equals("snapshot")) {
-                        Map <Integer, String> tmpMap = new HashMap<Integer, String>();
-                        firstNodeStub.snapshot(0, tmpMap);
-                    } else if((arr[0].equals("read") && arr.length > 1 && arr[1].matches("-?\\d+")) 
-                                && Integer.parseInt(arr[1]) > 0) {
-                                
-                                int address = Integer.parseInt(arr[1]);
-                                node_itf nodeToRead = firstNodeStub.getNodeFromAdress(address);
-                                String value = nodeToRead.read(address);
-                                System.out.println("Address " + arr[1] + " : " +  value);
-                    
-                    } else if((arr[0].equals("write") && arr.length > 2 && arr[1].matches("-?\\d+")) 
-                            && Integer.parseInt(arr[1]) > 0) {
-                                
-                                int address = Integer.parseInt(arr[1]);
-                                String value = arr[2];
-                                node_itf nodeToWrite = firstNodeStub.getNodeFromAdress(address);
-                                nodeToWrite.write(address, value);
-                                System.out.println("OK");
-                    } else {
-                                System.out.println("Command Unknown...!!!");
-                    }
-                }
+                scanUserInput(firstNodeStub, 0);
             } else {
                 Registry registry = LocateRegistry.getRegistry(port);
                 node_itf firstNodeStub = (node_itf) registry.lookup("node0");
@@ -71,41 +71,9 @@ public class node_main {
                 nodeStub.setMemory(nodeMemorySize);
 
                 firstNodeStub.setNextNodeTraverse(nodeStub);
-                firstNodeStub.registerAddress(nodeStub);
                 System.out.println("Node " + nodeId + " is created...!!!");
 
-                Scanner scanner = new Scanner(System.in);
-                String message;
-                while (true) {
-                    message = scanner.nextLine();
-                    String [] arr = message.split(" ");
-                    if (arr[0].equals("snapshotlocal")) {
-                        nodeStub.snapshotLocal();
-                        System.out.println("");
-                    } else if (arr[0].equals("snapshot")) {
-                        Map <Integer, String> tmpMap = new HashMap<Integer, String>();
-                        nodeStub.snapshot(nodeId, tmpMap);
-                    } else if((arr[0].equals("read") && arr.length > 1 && arr[1].matches("-?\\d+")) 
-                                && Integer.parseInt(arr[1]) > 0) {
-                                
-                                int address = Integer.parseInt(arr[1]);
-                                node_itf nodeToRead = firstNodeStub.getNodeFromAdress(address);
-                                String value = nodeToRead.read(address);
-                                System.out.println("Address " + address + " : " +  value);
-                    
-                    } else if((arr[0].equals("write") && arr.length > 2 && arr[1].matches("-?\\d+")) 
-                            && Integer.parseInt(arr[1]) > 0) {
-                                
-                                int address = Integer.parseInt(arr[1]);
-                                String value = arr[2];
-                                node_itf nodeToWrite = firstNodeStub.getNodeFromAdress(address);
-                                nodeToWrite.write(address, value);
-                                System.out.println("OK");
-                    } else {
-                                System.out.println("Command Unknown...!!!\n" + 
-                                "Usage =>\n1. write <address> <value>\n2. read <address>\n3. snapshot\n4. snapshotlocal");
-                    }
-                }
+                scanUserInput(node, nodeId);
             }
         } catch (Exception ex) {
             System.out.println("Error running a node\nFirst Node Usage : first <memory length> <optional : port>");

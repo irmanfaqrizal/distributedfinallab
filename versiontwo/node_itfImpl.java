@@ -1,5 +1,4 @@
 import java.rmi.RemoteException;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -8,17 +7,17 @@ public class node_itfImpl implements node_itf {
     private int id;
     private int idCount;
     private int memorySize;
-    private String[] memory;
     private Map <Integer, String> memoryMap; // only in first node -> easier to manage
     private node_itf nextNode;
-    private Map <Integer, node_itf> addressNode; // only in first node -> easier to manage
+    // private Map <Integer, node_itf> addressNode; // only in first node -> easier to manage
 
     protected node_itfImpl(int pId) {
         this.id = pId;
         this.idCount = 0;
         this.memoryMap = new HashMap<Integer, String>();
         if(pId == 0) {
-            this.addressNode = new HashMap <Integer, node_itf> ();
+            // this.addressNode = new HashMap <Integer, node_itf> ();
+            nextNode = this;
         }
     }
 
@@ -46,34 +45,51 @@ public class node_itfImpl implements node_itf {
         }
     }
 
+    // @Override
+    // public void registerAddress(node_itf pNode) throws RemoteException {
+    //     int idx = idCount * memorySize;
+    //     for (int i = 0; i < memorySize; i++) {
+    //         addressNode.put(idx, pNode);
+    //         idx++;
+    //     }
+    // }
+
+    // @Override
+    // public Map<Integer, node_itf> getAddressNode() throws RemoteException {
+    //     return addressNode;
+    // }
+
+    // @Override
+    // public node_itf getNodeFromAdress(int address) throws RemoteException {
+    //     return addressNode.get(address);
+    // }
+
     @Override
-    public void registerAddress(node_itf pNode) throws RemoteException {
-        int idx = idCount * memorySize;
-        for (int i = 0; i < memorySize; i++) {
-            addressNode.put(idx, pNode);
-            idx++;
+    public String read(int pAddress, int pId, boolean pStart) throws RemoteException {
+        String value = memoryMap.get(pAddress);
+        if (value != null) {
+            return value;
+        } else {
+            if (pId == this.id && pStart == false){
+                return "<address not found>";
+            }
+            else {
+                return nextNode.read(pAddress, pId, false);
+            }
         }
     }
 
     @Override
-    public Map<Integer, node_itf> getAddressNode() throws RemoteException {
-        return addressNode;
-    }
-
-    @Override
-    public node_itf getNodeFromAdress(int address) throws RemoteException {
-        return addressNode.get(address);
-    }
-
-    @Override
-    public String read(int address) throws RemoteException {
-        return memoryMap.get(address);
-    }
-
-    @Override
-    public boolean write(int address, String value) throws RemoteException {
-        memoryMap.put(address, value);
-        return true;
+    public String write(int pAddress, String pValue, int pId, boolean pStart) throws RemoteException {
+        String value = memoryMap.get(pAddress);
+        if (value != null) {
+            memoryMap.put(pAddress, pValue);
+            return "OK";
+        } else if (pId == this.id && pStart == false) {
+            return "<address not found>";
+        } else {
+            return nextNode.write(pAddress, pValue, pId, false);
+        }
     }
 
     @Override
@@ -90,7 +106,6 @@ public class node_itfImpl implements node_itf {
 
     @Override
     public void snapshotLocal() throws RemoteException {
-        System.out.println("Local memory =>");
         for(Map.Entry<Integer, String> entry : this.memoryMap.entrySet()) {           
             System.out.println("Address [" + entry.getKey() + "] : " + entry.getValue());
         }

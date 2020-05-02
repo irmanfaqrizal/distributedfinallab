@@ -17,6 +17,5 @@ public class test {
         System.out.println(test.size());
         testmap(test);
         System.out.println(test.size());
-        System
     }
 }
