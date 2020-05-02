@@ -22,9 +22,9 @@ public class dsm_itfImpl implements dsm_itf {
 	@Override
 	public void snapshot() throws RemoteException { 
 		System.out.println(dsmName + "===>");
-        for (node_itf node_itf : nodeList) {
-			System.out.println("Node ["+node_itf.getId() + "] Contains : ");
-		}
+        // for (node_itf node_itf : nodeList) {
+		// 	System.out.println("Node ["+node_itf.getId() + "] Contains : ");
+		// }
 	}
 
 	@Override
