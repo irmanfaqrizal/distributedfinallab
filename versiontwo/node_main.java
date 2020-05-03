@@ -15,9 +15,8 @@ public class node_main {
             System.out.print("Insert Command > ");
             message = scanner.nextLine();
             String [] arr = message.split(" ");
-            if(arr[0].equals("next")){
-                node.test();
-                // System.out.println(node.getNextNode());
+            if(arr[0].equals("order") && nodeId == 0){
+                node.getOrder();
             } else if (arr[0].equals("snapshotlocal")) {
                 node.snapshotLocal();
             } else if (arr[0].equals("snapshot")) {
@@ -39,7 +38,7 @@ public class node_main {
                         System.out.println(ok);
             } else {
                         System.out.println("Command Unknown...!!!\n" + 
-                        "Usage =>\n1. write <address> <value>\n2. read <address>\n3. snapshot\n4. snapshotlocal");
+                        "Usage =>\n1. write <address> <value>\n2. read <address>\n3. snapshot\n4. snapshotlocal\n5. order");
             }
         }
     }

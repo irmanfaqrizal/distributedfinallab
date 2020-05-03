@@ -17,9 +17,9 @@ public class handler_failurecheck extends TimerTask {
     public void run() {
         try {
             if(!this.tmpFirstNode.failureCheck(0, tmpFirstNode, tmpNodesOrder, true)) {
-                System.out.print("\nFailure happened...!!!\nInsert Command > ");
-                Map <Integer, node_itf> newNoderOrder = new HashMap<Integer, node_itf>();
-                tmpFirstNode.failureRestoreNodesOrder(0, true, newNoderOrder);;
+                System.out.print("\nFailure detected...!!!\nInsert Command > ");
+                Map <Integer, node_itf> newNodesOrder = new HashMap<Integer, node_itf>();
+                tmpFirstNode.failureRestoreNodesOrder(0, true, newNodesOrder);;
             } 
         } catch (RemoteException e) {
 

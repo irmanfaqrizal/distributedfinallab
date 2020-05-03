@@ -9,12 +9,11 @@ public class node_itfImpl implements node_itf {
     private int id;
     private int idCount;
     private int memorySize;
-    private Map <Integer, String> memoryMap; // only in first node -> easier to manage
+    private Map <Integer, String> memoryMap;
     private node_itf nextNode;
     private Map <Integer, node_itf> nodesOrder;
     TimerTask handler_failurecheck;
 	Timer timerHandler_failurecheck;
-    // private Map <Integer, node_itf> addressNode; // only in first node -> easier to manage
 
     public void startFailureCheck(node_itf pFirstNode, Map <Integer, node_itf> pNodesOrder) {
         handler_failurecheck = new handler_failurecheck(pFirstNode, pNodesOrder);
@@ -62,25 +61,6 @@ public class node_itfImpl implements node_itf {
             memoryMap.put(i + (this.id * pMemorySize), "");
         }
     }
-
-    // @Override
-    // public void registerAddress(node_itf pNode) throws RemoteException {
-    //     int idx = idCount * memorySize;
-    //     for (int i = 0; i < memorySize; i++) {
-    //         addressNode.put(idx, pNode);
-    //         idx++;
-    //     }
-    // }
-
-    // @Override
-    // public Map<Integer, node_itf> getAddressNode() throws RemoteException {
-    //     return addressNode;
-    // }
-
-    // @Override
-    // public node_itf getNodeFromAdress(int address) throws RemoteException {
-    //     return addressNode.get(address);
-    // }
 
     @Override
     public String read(int pAddress, int pId, boolean pStart) throws RemoteException {
@@ -154,16 +134,24 @@ public class node_itfImpl implements node_itf {
 
     @Override
     public boolean failureCheck(int pCount, node_itf pFirstNode, Map <Integer, node_itf> pNodesOrder, boolean pStart) throws RemoteException {
+        
         try {
             if (this.id == 0 && pStart == false) { // if checking arrived at first node
                 return true;
-            } else { // continue to next node
-                return nextNode.failureCheck(pCount + 1, pFirstNode, pNodesOrder, false);
+            } else { 
+                if(this.id == 0 && pStart == true) { // when we just begin we have to re-initialize the parameter
+                    pNodesOrder = nodesOrder;
+                    return nextNode.failureCheck(pCount + 1, pFirstNode, pNodesOrder, false);
+                } else { // continue to next node
+                    return nextNode.failureCheck(pCount + 1, pFirstNode, pNodesOrder, false);
+                }
             }
         } catch (Exception e) {
-            if (pNodesOrder.size() == pCount + 2 ) { // if the nextnode is connected to first node
+            if (pNodesOrder.size() == 2 && id == 0 && pStart == true) { // if failure happened on the second node and the first node is the only one left
                 this.nextNode = pFirstNode;
-            } else {
+            } else if (pNodesOrder.size() == pCount + 2 ) { // if the nextnode is connected to first node (that node is the last node)
+                this.nextNode = pFirstNode;
+            } else { // connect this node with the node after the failed node
                 this.nextNode = pNodesOrder.get(pCount + 2);
             }
             return false;
@@ -172,20 +160,25 @@ public class node_itfImpl implements node_itf {
 
     @Override
     public void failureRestoreNodesOrder(int pCount, boolean pStart, Map <Integer, node_itf> pNodesOrder) throws RemoteException {
-        if(this.id == 0 && pStart == true) {
-            pNodesOrder.put(0, this);
-            this.nextNode.failureRestoreNodesOrder(pCount+1, false, pNodesOrder);
-        } else if (this.id == 0 && pStart == false) {
-            this.nodesOrder = pNodesOrder;
-        } else {
+        if (this.id == 0 && pStart == true) { 
+            if (nodesOrder.size() == 2) { // if failure happened on the second/next node and the first node is the only one left
+                pNodesOrder.put(0, this);
+                nodesOrder = pNodesOrder;
+            } else { // if just begin
+                pNodesOrder.put(0, this);
+                this.nextNode.failureRestoreNodesOrder(pCount+1, false, pNodesOrder);
+            }
+        }  else if (this.id == 0 && pStart == false) { // arrived at first node
+            nodesOrder = pNodesOrder;
+        } else { //  put the node inside the order and continue
             pNodesOrder.put(pCount, this);
             this.nextNode.failureRestoreNodesOrder(pCount+1, false, pNodesOrder);
         }
     }
 
     @Override
-    public void test() throws RemoteException {
-        for(Map.Entry<Integer, node_itf> entry : this.nodesOrder.entrySet()) {           
+    public void getOrder() throws RemoteException {
+        for(Map.Entry<Integer, node_itf> entry : nodesOrder.entrySet()) {           
             System.out.println("Order [" + entry.getKey() + "], Id " + entry.getValue().getId());
         }
     }
