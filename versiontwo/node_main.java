@@ -42,7 +42,12 @@ public class node_main {
                         System.out.println(ok);
             } else {
                         System.out.println("Command Unknown...!!!\n" + 
-                        "Usage =>\n1. write <address> <value>\n2. read <address>\n3. snapshot\n4. snapshotlocal\n5. order (for first node)");
+                        "Usage =>\n1. write <address> <value>"
+                        +"\n2. read <address>"
+                        +"\n3. snapshot\n4. snapshotlocal"
+                        +"\n5. order (first node)"
+                        +"\n6. backup (first node)"
+                        +"\n7. allbackup (first node)");
             }
         }
     }
