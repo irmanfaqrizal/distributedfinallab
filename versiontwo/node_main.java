@@ -16,21 +16,25 @@ public class node_main {
             message = scanner.nextLine();
             String [] arr = message.split(" ");
             if(arr[0].equals("order") && nodeId == 0){
-                node.getOrder();
+                node.printNodes();
+            } else if(arr[0].equals("backup") && nodeId == 0){
+                node.printBackup();
+            } else if(arr[0].equals("allbackup") && nodeId == 0){
+                node.printAllBackups();
             } else if (arr[0].equals("snapshotlocal")) {
                 node.snapshotLocal();
             } else if (arr[0].equals("snapshot")) {
                 Map <Integer, String> tmpMap = new HashMap<Integer, String>();
                 node.snapshot(nodeId, tmpMap);
             } else if((arr[0].equals("read") && arr.length > 1 && arr[1].matches("-?\\d+")) 
-                        && Integer.parseInt(arr[1]) > 0) {
+                        && Integer.parseInt(arr[1]) >= 0) {
                         
                         int address = Integer.parseInt(arr[1]);
                         String value = node.read(address, nodeId, true);
                         System.out.println("Address " + arr[1] + " : " +  value);
             
             } else if((arr[0].equals("write") && arr.length > 2 && arr[1].matches("-?\\d+")) 
-                    && Integer.parseInt(arr[1]) > 0) {
+                    && Integer.parseInt(arr[1]) >= 0) {
                         
                         int address = Integer.parseInt(arr[1]);
                         String value = arr[2];
@@ -38,7 +42,7 @@ public class node_main {
                         System.out.println(ok);
             } else {
                         System.out.println("Command Unknown...!!!\n" + 
-                        "Usage =>\n1. write <address> <value>\n2. read <address>\n3. snapshot\n4. snapshotlocal\n5. order");
+                        "Usage =>\n1. write <address> <value>\n2. read <address>\n3. snapshot\n4. snapshotlocal\n5. order (for first node)");
             }
         }
     }
@@ -59,7 +63,7 @@ public class node_main {
                 node_itfImpl firstNode = new node_itfImpl(0);
                 node_itf firstNodeStub = (node_itf) UnicastRemoteObject.exportObject(firstNode, 0);
                 registry.rebind("node0", firstNodeStub);
-                firstNodeStub.setMemory(memorySize);
+                firstNodeStub.setMemory(memorySize, firstNodeStub.getBackup());
                 firstNodeStub.registerNode(firstNodeStub);
 
                 System.out.println("First node is created...!!!");
@@ -72,7 +76,8 @@ public class node_main {
                 node_itfImpl node = new node_itfImpl(nodeId);
                 node_itf nodeStub = (node_itf) UnicastRemoteObject.exportObject(node, 0);
                 registry.rebind("node" + nodeId, nodeStub);
-                nodeStub.setMemory(nodeMemorySize);
+                nodeStub.setMemory(nodeMemorySize, firstNodeStub.getBackup());
+                firstNodeStub.clearBackup();
                 firstNodeStub.registerNode(nodeStub);
                 firstNodeStub.setNextNodeTraverse(nodeStub);
                 System.out.println("Node " + nodeId + " is created...!!!");

@@ -16,7 +16,8 @@ public class handler_failurecheck extends TimerTask {
     @Override
     public void run() {
         try {
-            if(!this.tmpFirstNode.failureCheck(0, tmpFirstNode, tmpNodesOrder, true)) {
+            Map<Integer, Map <Integer, String>> pBackupMap = new HashMap<Integer, Map <Integer, String>>();
+            if(!this.tmpFirstNode.failureCheck(0, tmpFirstNode, tmpNodesOrder, true, pBackupMap)) {
                 System.out.print("\nFailure detected...!!!\nInsert Command > ");
                 Map <Integer, node_itf> newNodesOrder = new HashMap<Integer, node_itf>();
                 tmpFirstNode.failureRestoreNodesOrder(0, true, newNodesOrder);;
